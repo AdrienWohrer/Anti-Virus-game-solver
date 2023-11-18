@@ -103,12 +103,6 @@ class Antivirus():
             if key not in self.tilekeys:
                 raise ValueError(f"key '{key}' is not a valid tile key.\nValid tile keys are : {self.tilekeys}")
         self.initial_position = kwargs
-
-
-    ### Reset an initial position, for the same tiles but in a different position, directly given as a list of tiles
-    
-    def reset_fast(self, pos):
-        self.set_initial_position(**dict(zip(self.initial_position.keys(), pos)))
     
     
     ### Alternative "2d" parametrization
@@ -178,19 +172,10 @@ class Antivirus():
 
     ##################################################
     #
-    # Tile moving functions
+    # Tile moving function
     #
     ##################################################
 
-    
-    ### Basic tile moving (without error checking)
-
-    def basic_move(self, tile, move):
-        res_locs = self.resulting_locs[move]    # Location changes for this move
-        return  tuple(res_locs[i] for i in tile)
-
-    
-    ### Position updating function
 
     def change_pos(self, pos, tix, move):
         '''
@@ -411,9 +396,13 @@ if __name__ == '__main__':
 ##    holes = [4]
 ##    init = {'rouge': (20,24), 'bleu': (11,14), 'foret': (5,12), 'violet': (2,1,8), 'pomme': (17,16,19), 'rose': (15,22)}
     
-    ## Random hard problem created with position_creator.py
-    holes = []
-    init = {'rouge': (5, 9), 'bleu': (13, 10), 'foret': (7, 6), 'jaune': (20, 21, 25), 'orange': (16, 19, 23), 'pomme': (0, 1, 8), 'rose': (4, 11)}
+##    ## Random hard problem created with position_creator.py
+##    holes = []
+##    init = {'rouge': (5, 9), 'bleu': (13, 10), 'foret': (7, 6), 'jaune': (20, 21, 25), 'orange': (16, 19, 23), 'pomme': (0, 1, 8), 'rose': (4, 11)}
+    
+##    ## Coco's problem
+##    holes = []
+##    init = {'rouge': (25,21), 'bleu': (16,19), 'foret': (17,24), 'rose': (15,22), 'orange': (10,7,11), 'pomme': (6,3,4), 'jaune': (0,1,2)}
 
     ################
     

@@ -141,9 +141,13 @@ def random_position(n_tiles_max = None):
     return holes, init, av
 
 
-######################################
-### Launch ! (Can modify difficulty threshold on n_moves... but a higher threshold takes longer to be found !)
+##################################################
+#
+# Testing
+#
+##################################################
 
+    
 if __name__ == '__main__':
     # Running as a script
 
@@ -166,9 +170,11 @@ if __name__ == '__main__':
             n_moves = len(av.shortest_path())
             
             if n_moves < required_n_moves[0] and try_reverse_search:
-                av.reset_fast(av.last_pos)          # obtained exit position becomes initial position
+                init = dict(zip(av.initial_position.keys(), av.last_pos))
+                av.set_initial_position(**init)     # obtained exit position becomes initial position
                 av.solve(stopping_criterion=None)   # 'reverse' tree building from exit position
-                av.reset_fast(av.last_pos)          # furthest away position found
+                init = dict(zip(av.initial_position.keys(), av.last_pos))
+                av.set_initial_position(**init)     # furthest away position found
                 av.solve()
                 n_moves = len(av.shortest_path())
 
@@ -199,6 +205,10 @@ if __name__ == '__main__':
 ##holes = [22]
 ##init = {'rouge': (16, 12), 'bleu': (20, 17), 'pomme': (7, 10, 9), 'orange': (14, 18, 21), 'violet': (8, 1, 2)}
 ## 40 moves ; 5 tiles ; MASTER
+
+##holes = []
+##init = {'rouge': (16, 12), 'bleu': (23, 20), 'rose': (9, 2), 'jaune': (21, 18, 11), 'foret': (8, 1), 'nuit': (10, 17, 24)}
+## 41 moves ; 6 tiles ; MASTER
 
 ##holes = [12, 14]
 ##init = {'rouge': (19, 15), 'jaune': (1, 5, 6), 'orange': (20, 16, 13), 'bleu': (24, 21)}
