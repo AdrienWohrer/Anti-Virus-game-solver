@@ -1,5 +1,5 @@
 # Anti-Virus-game-solver
-Solver for the Anti-Virus® game by SmartGames®.
+Solver for the [Anti-Virus®](https://www.smartgames.eu/uk/one-player-games/anti-virus) game by SmartGames®.
 
 * antivirus_solver.py contains the main class, allowing to define and solve an instance of Anti-Virus® game.
 
