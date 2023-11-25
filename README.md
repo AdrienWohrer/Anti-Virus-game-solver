@@ -5,7 +5,7 @@ Solver for the Anti-Virus® game by SmartGames®.
 
 * problem_creator.py is a script to generate random problems for the Anti-Virus® game.
 
-* equivalence_classes.py is a script to count equivalence classes given a set of tiles and orientations.
+* connex_components.py is a script to count connex components given a set of tiles and orientations.
 
 Each of these three files can be executed as a script. For example, under linux, type in the command line
 

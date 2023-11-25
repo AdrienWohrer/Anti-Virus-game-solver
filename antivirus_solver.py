@@ -387,7 +387,11 @@ if __name__ == '__main__':
     # Running as a script
 
     import time
-    
+
+    ## 'Junior' problem from the Smartgames online playing website
+    holes = [10]
+    init = {'rouge': (17,21), 'orange': (12,16,13), 'pomme': (8,15,19), 'nuit': (25,18,11)}
+
 ##    ## Problem 58 from the booklet
 ##    holes = [2]
 ##    init = {'rouge': (17,21), 'bleu': (3,6), 'foret': (10,11), 'violet': (16,23,22), 'pomme': (0,1,8), 'jaune': (9,12,19)}
@@ -403,6 +407,10 @@ if __name__ == '__main__':
 ##    ## Coco's problem
 ##    holes = []
 ##    init = {'rouge': (25,21), 'bleu': (16,19), 'foret': (17,24), 'rose': (15,22), 'orange': (10,7,11), 'pomme': (6,3,4), 'jaune': (0,1,2)}
+    
+##    ## Coco's problem
+##    holes = []
+##    init = {'rouge': (10,14), 'bleu': (5,8), 'foret': (11,18), 'rose': (12,13), 'violet': (23,16,17), 'jaune': (2,3,7)}
 
     ################
     

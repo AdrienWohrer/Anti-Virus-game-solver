@@ -1,5 +1,5 @@
 '''
-Given a set of tiles and orientations, count the number of equivalence classes for their positions (two positions being 'equivalent' if one can move from one to the other).
+Given a set of tiles and orientations, count the number of connex components for their positions (two positions are in the same component if one can move from one to the other).
 '''
 
 import matplotlib.pyplot as plt
@@ -10,7 +10,7 @@ from problem_creator import place_tile
 ##################################
 
 # tiles + orientations + holes used.
-# The goal is to count the number of equivalence classes for positioning these tiles.
+# The goal is to count the number of connex components for positioning these tiles.
 
 tiles = ["rouge", "bleu", "nuit", "orange", "pomme"]
 ##tiles = ["rouge", "bleu", "orange", "pomme"]
@@ -26,10 +26,10 @@ available_locations = [i for i in range(26) if i not in holes]
 av = Antivirus()
 av.set_holes(holes)
 
-### Dictionary giving the class of all visited positions
+### Dictionary giving the component of all visited positions
 
-equiv_class = {}
-n_class = [0]       # should be a list to be accessible from within function rec_for
+connex_component = {}
+n_compo = [0]       # should be a list to be accessible from within function rec_for
 
 ### Recursive function to try ALL possible positions of the tiles
 
@@ -51,37 +51,37 @@ def rec_for(k):
         if av.check_initial_position():
             # starting position is valid
             pos = list(init.values())
-            if equiv_class.get(tuple(pos)) is None:
-                # position has not been encountered yet (new equivalence class). Explore its equivalence class:
+            if connex_component.get(tuple(pos)) is None:
+                # position has not been encountered yet (new connex component). Explore its connex component:
                 av.solve(stopping_criterion = None)
                 # Mark all reached positions, with the same class number
-                equiv_class.update((tuple(pos), n_class[0]) for pos in av.visited_tree.keys())
-                n_class[0] += 1
+                connex_component.update((tuple(pos), n_compo[0]) for pos in av.visited_tree.keys())
+                n_compo[0] += 1
 
 rec_for(0)
-print(f"Found {n_class[0]} equivalence classes of positions for this choice of tiles.")
+print(f"Found {n_compo[0]} connex components of positions for this choice of tiles.")
 
 ### Computing size of various equivalence classes
-class_sizes = [None] * n_class[0]
+class_sizes = [None] * n_compo[0]
 
-for nc in range(n_class[0]):
-    class_sizes[nc] = len([ n for n in equiv_class.values() if n==nc ])
+for nc in range(n_compo[0]):
+    class_sizes[nc] = len([ n for n in connex_component.values() if n==nc ])
 ##    print(f"Class {nc} : {class_sizes[nc]} positions")
 
-sortids = sorted(range(n_class[0]), key=lambda k: class_sizes[k], reverse=True)
+sortids = sorted(range(n_compo[0]), key=lambda k: class_sizes[k], reverse=True)
 
-print("Showing two representants of each class, starting with the larger classes.")
-print("Figure 1 : reference position for this class.")
-print("Figure 2 : furthest away position in the same class.")
+print("Showing two representants of each component, starting with the larger components.")
+print("Figure 1 : reference position for this component.")
+print("Figure 2 : furthest away position in the same component.")
 
 plt.ion()
 for nc in sortids:
     
-    print(f"Class {nc} : {class_sizes[nc]} positions.")
+    print(f"Component {nc} : {class_sizes[nc]} positions.")
 
     plt.figure(1)
     plt.clf()
-    pos = list(equiv_class.keys()) [ list(equiv_class.values()).index(nc) ]
+    pos = list(connex_component.keys()) [ list(connex_component.values()).index(nc) ]
     av.plot(pos)
     
     # Look for furthest aways position in the same class

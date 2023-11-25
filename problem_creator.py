@@ -152,8 +152,8 @@ if __name__ == '__main__':
     # Running as a script
 
     ###################################
-    n_tiles_max = 6                         # limit number of tiles on the board. (Warning: long solutions are harder to find with less tiles)
-    required_n_moves = [40,1000]            # [lower_bound, upper_bound] on the difficulty threshold (number of moves for the optimal solution)
+    n_tiles_max = None                      # limit number of tiles on the board. (Warning: long solutions are harder to find with less tiles)
+    required_n_moves = [70,None]            # [lower_bound, upper_bound] on the difficulty threshold (number of moves for the optimal solution)
     ###################################
 
     # Experimentally-assessed boundary where using "reverse search" becomes useful
@@ -164,7 +164,8 @@ if __name__ == '__main__':
     for _ in range(1):
         
         n_moves = 0
-        while n_moves < required_n_moves[0] or n_moves > required_n_moves[1]:
+        while required_n_moves[0] and n_moves < required_n_moves[0] \
+        or required_n_moves[1] and n_moves > required_n_moves[1]:
 
             holes, init, av = random_position(n_tiles_max = n_tiles_max)
             n_moves = len(av.shortest_path())
@@ -210,9 +211,25 @@ if __name__ == '__main__':
 ##init = {'rouge': (16, 12), 'bleu': (23, 20), 'rose': (9, 2), 'jaune': (21, 18, 11), 'foret': (8, 1), 'nuit': (10, 17, 24)}
 ## 41 moves ; 6 tiles ; MASTER
 
+##holes = []
+##init = {'rouge': (7, 3), 'bleu': (5, 2), 'violet': (6, 13, 12), 'jaune': (20, 24, 25), 'orange': (11, 14, 10), 'rose': (8, 1)}
+## 52 moves ; 6 tiles ; MASTER (nice)
+
 ##holes = [12, 14]
 ##init = {'rouge': (19, 15), 'jaune': (1, 5, 6), 'orange': (20, 16, 13), 'bleu': (24, 21)}
 ## 57 moves ; 4 tiles ; MASTER
+
+##holes = [25, 21]
+##init = {'rouge': (6, 2), 'foret': (24, 17), 'orange': (15, 19, 22), 'bleu': (23, 20), 'violet': (8, 9, 16), 'rose': (10, 11)}
+## 71 moves ; 6 tiles ; EXPERT/MASTER
+
+##holes = [20]
+##init = {'rouge': (7, 3), 'foret': (5, 6), 'rose': (15, 16), 'pomme': (0, 1, 8), 'bleu': (13, 10), 'orange': (18, 21, 17), 'nuit': (24, 23, 22)}
+##79 moves 7 tiles ; MASTER/WIZARD
+
+##holes = [13]
+##init = {'rouge': (20, 16), 'bleu': (22, 19), 'nuit': (3, 2, 1), 'foret': (24, 25), 'rose': (5, 6), 'orange': (8, 12, 15)}
+## 83 moves ; 6 tiles ; MASTER
 
 ##holes = []
 ##init = {'rouge': (5, 9), 'bleu': (13, 10), 'foret': (7, 6), 'jaune': (25, 21, 20), 'orange': (23, 19, 16), 'pomme': (0, 1, 8), 'rose': (4, 11)}
