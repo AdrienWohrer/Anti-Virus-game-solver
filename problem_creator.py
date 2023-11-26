@@ -152,8 +152,8 @@ if __name__ == '__main__':
     # Running as a script
 
     ###################################
-    n_tiles_max = None                      # limit number of tiles on the board. (Warning: long solutions are harder to find with less tiles)
-    required_n_moves = [70,None]            # [lower_bound, upper_bound] on the difficulty threshold (number of moves for the optimal solution)
+    n_tiles_max = 6                         # limit number of tiles on the board. (Warning: long solutions are harder to find with less tiles)
+    required_n_moves = [40,None]            # [lower_bound, upper_bound] on the difficulty threshold (number of moves for the optimal solution)
     ###################################
 
     # Experimentally-assessed boundary where using "reverse search" becomes useful
@@ -231,9 +231,17 @@ if __name__ == '__main__':
 ##init = {'rouge': (20, 16), 'bleu': (22, 19), 'nuit': (3, 2, 1), 'foret': (24, 25), 'rose': (5, 6), 'orange': (8, 12, 15)}
 ## 83 moves ; 6 tiles ; MASTER
 
+##holes = [7]
+##init = {'rouge': (17, 13), 'bleu': (5, 2), 'orange': (20, 23, 19), 'rose': (15, 8), 'jaune': (14, 10, 9), 'foret': (24, 25)}
+##88 moves
+
 ##holes = []
 ##init = {'rouge': (5, 9), 'bleu': (13, 10), 'foret': (7, 6), 'jaune': (25, 21, 20), 'orange': (23, 19, 16), 'pomme': (0, 1, 8), 'rose': (4, 11)}
 ## 90 moves ; 7 tiles ;
+
+##holes = []
+##init = {'rouge': (14, 10), 'pomme': (20, 23, 22), 'orange': (3, 6, 2), 'jaune': (13, 9, 8), 'rose': (16, 17), 'foret': (24, 25), 'bleu': (15, 12)}
+##96 moves
 
 ##holes = [22, 25]
 ##init = {'rouge': (6, 10), 'orange': (16, 13, 17), 'bleu': (23, 20), 'jaune': (9, 12, 19), 'violet': (8, 1, 2)}
@@ -243,3 +251,14 @@ if __name__ == '__main__':
 ##init = {'rouge': (17, 21), 'violet': (3, 10, 9), 'foret': (13, 14), 'jaune': (22, 19, 12), 'pomme': (0, 1, 8), 'bleu': (5, 2), 'rose': (23, 24)}
 ## 101 moves ; 7 tiles
 
+##holes = []
+##init = {'rouge': (18, 14), 'violet': (21, 20, 13), 'rose': (12, 5), 'bleu': (22, 19), 'pomme': (6, 3, 4), 'orange': (10, 7, 11), 'foret': (23, 24)}
+##111 moves ; 7 tiles
+
+##holes = []
+##init = {'rouge': (7, 3), 'pomme': (20, 16, 9), 'rose': (21, 14), 'orange': (17, 13, 10), 'bleu': (22, 19), 'foret': (18, 11), 'jaune': (1, 5, 6)}
+##121 moves ; 7 tiles
+
+##holes = []
+##init = {'rouge': (18, 14), 'pomme': (8, 5, 6), 'foret': (9, 10), 'bleu': (15, 12), 'orange': (13, 17, 20), 'jaune': (0, 1, 2), 'rose': (23, 16)}
+##123 moves

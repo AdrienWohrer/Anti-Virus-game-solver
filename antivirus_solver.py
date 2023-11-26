@@ -79,7 +79,10 @@ class Antivirus():
         # Last visited position during the tree building
         self.last_pos = None
     
-    
+        # Forced passage positions (just for fun ; not necessary)
+        self.forced_passage = None
+
+        
     ### Set a "hole" at each given location (this is irreversible for this Antivirus instance)
 
     def set_holes(self, *locations):
@@ -303,7 +306,73 @@ class Antivirus():
             print(f"{names[s[1]]} : {s[2]}")
         print(f"Nombre d'étapes: {len(path)}")
 
+    ##################################################
 
+        
+    ### Just for fun ! Target 'forced passage' positions in the solution
+    ### We compute these forced passage points thanks to the depth-first Hopcroft-Tarjan algorithm for articulation points
+
+    def compute_forced_passage_positions(self):
+
+        pos = self.last_pos
+        assert pos is not None, "No search tree built yet. Call function solve() first."
+
+        articulation_points, df_tree = self.hopcroft_tarjan()
+
+        self.forced_passage = []
+        while pos != None:
+            if articulation_points.get(tuple(pos)) is True:
+                self.forced_passage.insert(0, tuple(pos))
+            pos = df_tree[tuple(pos)][0]
+
+
+     ### https://en.wikipedia.org/wiki/Biconnected_component
+     
+    def hopcroft_tarjan(self):
+
+        start = time.time()        
+        start_pos = list(self.initial_position.values())
+        to_explore = [start_pos]                             # Stack (Last In First Out) of positions to explore.
+        tree = {tuple(start_pos): [None,None,0,0,None]}      # Store [parent, other_neighbors, depth, lowpoint] for each position
+        articulation_points = {}
+        
+        while len(to_explore)>0:
+
+            pos = to_explore[-1]
+            info = tree[tuple(pos)]
+            father = info[0]
+            
+            # First visit of pos: compute neighbors
+            if info[1] is None:
+                neighbors = []
+                for tix in range(len(pos)):
+                    for move in ["nw","ne","sw","se"]:
+                        new_pos, _ = self.change_pos(pos, tix, move)
+                        if new_pos is not None and (father is None or tuple(father) != tuple(new_pos)):
+                            neighbors.append(new_pos)
+                info[1] = neighbors
+            else:
+                neighbors = info[1]
+
+            # Append neighbors to the stack
+            for n_pos in neighbors:
+                n_info = tree.get(tuple(n_pos))
+                if n_info is None:
+                    to_explore.append( n_pos )
+                    tree[tuple(n_pos)] = [pos, None, info[2]+1, info[2]+1]      # info[2] = depth
+                    break  # --> explore n_pos
+                else:
+                    # already known neighbor... update lowpoint
+                    info[3] = min(info[3], n_info[2], n_info[3])                # info[3] = lowpoint
+                    if tuple(pos) != tuple(start_pos) and info[2] <= n_info[3]:
+                        articulation_points[tuple(pos)] = True
+            else:
+                # no break --> all neighbors have been explored --> pos can be popped out
+                to_explore.pop()
+
+        return articulation_points, tree
+    
+    
     ##################################################
     #
     # Visualization functions
@@ -370,11 +439,23 @@ class Antivirus():
 
     ### Plot the shortest path solution
 
-    def plot_solution(self, refresh_time=0.3):  
-        for pos in self.shortest_path():
+    def plot_solution(self, refresh_time=None):  
+        '''
+        Graphical plot of the solution.
+        - Step-by-step if `refresh_time`=None)
+        - Else, plot a move every `refresh_time` seconds.
+        '''
+        for i,pos in enumerate(self.shortest_path()):
             plt.clf()
             self.plot(pos[0])
-            plt.pause(refresh_time)
+            if refresh_time is None:
+                if self.forced_passage and tuple(pos[0]) in self.forced_passage:
+                    input(f"move {i} (* forced passage)")
+                    input()
+                else:
+                    input(f"move {i}")
+            else:
+                plt.pause(refresh_time)
     
     
 ##################################################
@@ -388,17 +469,17 @@ if __name__ == '__main__':
 
     import time
 
-    ## 'Junior' problem from the Smartgames online playing website
-    holes = [10]
-    init = {'rouge': (17,21), 'orange': (12,16,13), 'pomme': (8,15,19), 'nuit': (25,18,11)}
+##    ## 'Junior' problem from the Smartgames online playing website
+##    holes = [10]
+##    init = {'rouge': (17,21), 'orange': (12,16,13), 'pomme': (8,15,19), 'nuit': (25,18,11)}
 
 ##    ## Problem 58 from the booklet
 ##    holes = [2]
 ##    init = {'rouge': (17,21), 'bleu': (3,6), 'foret': (10,11), 'violet': (16,23,22), 'pomme': (0,1,8), 'jaune': (9,12,19)}
     
-##    ## Problem 60 from the booklet
-##    holes = [4]
-##    init = {'rouge': (20,24), 'bleu': (11,14), 'foret': (5,12), 'violet': (2,1,8), 'pomme': (17,16,19), 'rose': (15,22)}
+    ## Problem 60 from the booklet
+    holes = [4]
+    init = {'rouge': (20,24), 'bleu': (11,14), 'foret': (5,12), 'violet': (2,1,8), 'pomme': (17,16,19), 'rose': (15,22)}
     
 ##    ## Random hard problem created with position_creator.py
 ##    holes = []
@@ -420,7 +501,8 @@ if __name__ == '__main__':
 
     plt.ion()
     av.plot()                                   # plot initial position
-
+    refresh_time = 0.25                         # refresh time of the animated solution (in seconds)
+    
     start = time.time()
     found = av.solve(penalize_blocks=True)      # solve the position
     solvetime = time.time()-start
@@ -428,9 +510,17 @@ if __name__ == '__main__':
     if found:
         av.print_solution()        
         print(f"Solving time: {solvetime}")
+
+        if True:
+            print("Computing forced passage positions in the solution. (Feel free to comment this part!)")
+            start = time.time()
+            av.compute_forced_passage_positions()
+            print(f"Done in time: {time.time()-start}")
+            refresh_time = None
+
         input("Press a key to visualize the solution !")
         plt.figure()
-        av.plot_solution(refresh_time=0.25)
+        av.plot_solution(refresh_time=refresh_time)
         input("Done ! Press a key to close.")
     else:
         print("No solution !")
