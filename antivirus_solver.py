@@ -4,6 +4,7 @@ Solver for the game Anti-Virus
 
 import numpy as np
 import matplotlib.pyplot as plt
+from hopcroft_tarjan import hopcroft_tarjan
 
 ##################################################
 #
@@ -221,7 +222,7 @@ class Antivirus():
     ### Tree building function, from a given starting position.
     ### Note : stopping_criterion can be customized to perform other types of searches.
 
-    def solve(self, stopping_criterion = "default", distance_max=None, penalize_blocks=True):
+    def solve(self, stopping_criterion = "default", distance_max=None, penalize_blocks=True, forbidden_positions=[]):
         '''
         Starting from initial position, explore all tile moves until stopping criterion is met (or distance_max is reached).
 
@@ -231,15 +232,18 @@ class Antivirus():
         
         :param penalize_blocks: if True, penalize block moves by assigning them as many moves as there are tiles involved in the block (this is slightly faster, for some reason!?).
         
+        :param forbidden_positions: to specify some positions that should not be used in the solution (only for fun!)
+        
         :return: True/False, whether a solution has been found or not.
         '''
         
         father_info = ("start",0,"start")                   # Surrogate "father information" for start_pos
         start_pos = list(self.initial_position.values())
         to_explore = [(start_pos, 1, father_info, 0)]       # Queue (First In First Out) of positions to explore. Last number is the distance from start_pos.
-        self.visited_tree = {}                              # Re-initialize tree and last_pos
+        self.visited_tree = {}                              # Re-initialize tree, last_pos and forced_passage
         self.last_pos = None
-      
+        self.forced_passage = None
+        
         if stopping_criterion == "default":
             # Default stopping criterion : when default target tile has reached location 0
             try:
@@ -276,7 +280,7 @@ class Antivirus():
             for tix in [prev_tix]+list(range(prev_tix))+list(range(prev_tix+1,len(pos))):
                 for move in ["nw","ne","sw","se"]:
                     new_pos, block_size = self.change_pos(pos, tix, move)
-                    if new_pos is not None:
+                    if new_pos is not None and new_pos not in forbidden_positions:
                         if self.visited_tree.get(tuple(new_pos)) is None:
                             # Found a new valid position
                             to_explore.append( (new_pos, block_size, (pos, tix, move), distance+1) )
@@ -306,72 +310,53 @@ class Antivirus():
             print(f"{names[s[1]]} : {s[2]}")
         print(f"Nombre d'étapes: {len(path)}")
 
+
     ##################################################
-
+    #
+    # Forced-passage positions analysis (biconnexity analysis)
+    #
+    ##################################################
         
-    ### Just for fun ! Target 'forced passage' positions in the solution
-    ### We compute these forced passage points thanks to the depth-first Hopcroft-Tarjan algorithm for articulation points
-
+    # Just for fun ! Target 'forced passage' positions in the solution
+    # We compute these thanks to the depth-first Hopcroft-Tarjan algorithm to target biconnected components
+    
     def compute_forced_passage_positions(self):
 
-        pos = self.last_pos
-        assert pos is not None, "No search tree built yet. Call function solve() first."
+        assert self.last_pos is not None, "No search tree built yet. Call function solve() first."
 
-        articulation_points, df_tree = self.hopcroft_tarjan()
+        # Helper function : return neighbors in the graph of positions.
+        # In the graph, positions are indexed by their `tuple' version (as in self.solve)
+        def find_neighbors(tuple_pos):
+            neighbors = []
+            pos = list(tuple_pos)
+            for tix in range(len(pos)):
+                for move in ["nw","ne","sw","se"]:
+                    new_pos, _ = self.change_pos(pos, tix, move)
+                    if new_pos is not None:
+                        neighbors.append(tuple(new_pos))
+            return neighbors
 
-        self.forced_passage = []
-        while pos != None:
-            if articulation_points.get(tuple(pos)) is True:
-                self.forced_passage.insert(0, tuple(pos))
-            pos = df_tree[tuple(pos)][0]
-
-
-     ### https://en.wikipedia.org/wiki/Biconnected_component
-     
-    def hopcroft_tarjan(self):
-
-        start = time.time()        
-        start_pos = list(self.initial_position.values())
-        to_explore = [start_pos]                             # Stack (Last In First Out) of positions to explore.
-        tree = {tuple(start_pos): [None,None,0,0,None]}      # Store [parent, other_neighbors, depth, lowpoint] for each position
-        articulation_points = {}
+        # Here goes ! Find biconnected solutions.
+        components, tree = hopcroft_tarjan(tuple(self.last_pos), find_neighbors)
         
-        while len(to_explore)>0:
+        # Finally, define "forced passage positions" as the positions along the optimal
+        # solution where we go from one biconnected component to another.
 
-            pos = to_explore[-1]
-            info = tree[tuple(pos)]
-            father = info[0]
-            
-            # First visit of pos: compute neighbors
-            if info[1] is None:
-                neighbors = []
-                for tix in range(len(pos)):
-                    for move in ["nw","ne","sw","se"]:
-                        new_pos, _ = self.change_pos(pos, tix, move)
-                        if new_pos is not None and (father is None or tuple(father) != tuple(new_pos)):
-                            neighbors.append(new_pos)
-                info[1] = neighbors
-            else:
-                neighbors = info[1]
-
-            # Append neighbors to the stack
-            for n_pos in neighbors:
-                n_info = tree.get(tuple(n_pos))
-                if n_info is None:
-                    to_explore.append( n_pos )
-                    tree[tuple(n_pos)] = [pos, None, info[2]+1, info[2]+1]      # info[2] = depth
-                    break  # --> explore n_pos
-                else:
-                    # already known neighbor... update lowpoint
-                    info[3] = min(info[3], n_info[2], n_info[3])                # info[3] = lowpoint
-                    if tuple(pos) != tuple(start_pos) and info[2] <= n_info[3]:
-                        articulation_points[tuple(pos)] = True
-            else:
-                # no break --> all neighbors have been explored --> pos can be popped out
-                to_explore.pop()
-
-        return articulation_points, tree
-    
+        pos = self.last_pos
+        prev_comp = None
+        self.forced_passage = []
+        while True:
+            comp = components[tuple(pos)]
+            # print(comp)
+            next_pos, _, _ = self.visited_tree[tuple(pos)]
+            if next_pos == "start":
+                break
+            next_comp = components[tuple(next_pos)]
+            if prev_comp is not None and all(i != j for i in prev_comp for j in next_comp):
+                # switching from one component to the other
+                self.forced_passage.insert(0, pos)
+            prev_comp, pos, comp = comp, next_pos, next_comp
+        
     
     ##################################################
     #
@@ -442,14 +427,14 @@ class Antivirus():
     def plot_solution(self, refresh_time=None):  
         '''
         Graphical plot of the solution.
-        - Step-by-step if `refresh_time`=None)
+        - Step-by-step if `refresh_time`=None
         - Else, plot a move every `refresh_time` seconds.
         '''
         for i,pos in enumerate(self.shortest_path()):
             plt.clf()
             self.plot(pos[0])
             if refresh_time is None:
-                if self.forced_passage and tuple(pos[0]) in self.forced_passage:
+                if self.forced_passage and pos[0] in self.forced_passage:
                     input(f"move {i} (* forced passage)")
                     input()
                 else:
@@ -457,6 +442,33 @@ class Antivirus():
             else:
                 plt.pause(refresh_time)
     
+
+    ### User-friendly interface with the player to display the solution
+
+    def solution_user_interface(self):
+        
+        assert self.last_pos is not None, \
+            "No search tree built yet. Call function solve() first."
+        
+        print("Press [Enter] for solution ; Press [f+Enter] to view forced passage positions.")
+        yo = input()
+        plt.figure()
+            
+        if yo == "f":
+            print("Just a second. Computing forced passage positions...")
+            self.compute_forced_passage_positions()
+            if len(self.forced_passage) == 0:
+                input("Sorry, found no forced passage positions. Press [Enter] for solution.")
+            else:
+                for pos in self.forced_passage:
+                    plt.clf()
+                    self.plot(pos)
+                    input("This is the next forced passage towards the solution. Press [Enter] for next forced passage.")
+                input("Viewed all forced passage possitions. Press [Enter] for solution.")
+        
+        self.plot_solution(refresh_time=.3)
+        input("Done ! Press a key to close.")
+        
     
 ##################################################
 #
@@ -473,22 +485,22 @@ if __name__ == '__main__':
 ##    holes = [10]
 ##    init = {'rouge': (17,21), 'orange': (12,16,13), 'pomme': (8,15,19), 'nuit': (25,18,11)}
 
-##    ## Problem 58 from the booklet
-##    holes = [2]
-##    init = {'rouge': (17,21), 'bleu': (3,6), 'foret': (10,11), 'violet': (16,23,22), 'pomme': (0,1,8), 'jaune': (9,12,19)}
-    
-    ## Problem 60 from the booklet
-    holes = [4]
-    init = {'rouge': (20,24), 'bleu': (11,14), 'foret': (5,12), 'violet': (2,1,8), 'pomme': (17,16,19), 'rose': (15,22)}
+    ## Problem 58 from the booklet
+    holes = [2]
+    init = {'rouge': (17,21), 'bleu': (3,6), 'foret': (10,11), 'violet': (16,23,22), 'pomme': (0,1,8), 'jaune': (9,12,19)}
+
+##    ## Problem 60 from the booklet
+##    holes = [4]
+##    init = {'rouge': (20,24), 'bleu': (11,14), 'foret': (5,12), 'violet': (2,1,8), 'pomme': (17,16,19), 'rose': (15,22)}
     
 ##    ## Random hard problem created with position_creator.py
 ##    holes = []
 ##    init = {'rouge': (5, 9), 'bleu': (13, 10), 'foret': (7, 6), 'jaune': (20, 21, 25), 'orange': (16, 19, 23), 'pomme': (0, 1, 8), 'rose': (4, 11)}
-    
+
 ##    ## Coco's problem
 ##    holes = []
 ##    init = {'rouge': (25,21), 'bleu': (16,19), 'foret': (17,24), 'rose': (15,22), 'orange': (10,7,11), 'pomme': (6,3,4), 'jaune': (0,1,2)}
-    
+
 ##    ## Coco's problem
 ##    holes = []
 ##    init = {'rouge': (10,14), 'bleu': (5,8), 'foret': (11,18), 'rose': (12,13), 'violet': (23,16,17), 'jaune': (2,3,7)}
@@ -506,22 +518,12 @@ if __name__ == '__main__':
     start = time.time()
     found = av.solve(penalize_blocks=True)      # solve the position
     solvetime = time.time()-start
-    
+
     if found:
-        av.print_solution()        
+        # av.print_solution()        
         print(f"Solving time: {solvetime}")
-
-        if True:
-            print("Computing forced passage positions in the solution. (Feel free to comment this part!)")
-            start = time.time()
-            av.compute_forced_passage_positions()
-            print(f"Done in time: {time.time()-start}")
-            refresh_time = None
-
-        input("Press a key to visualize the solution !")
-        plt.figure()
-        av.plot_solution(refresh_time=refresh_time)
-        input("Done ! Press a key to close.")
+        av.solution_user_interface()
+    
     else:
         print("No solution !")
 
